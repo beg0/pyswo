@@ -1,5 +1,4 @@
-PYSWO - Python Library to read ARM Single Wire Output data
-__________________________________________________________
+# PYSWO - Python Library to read ARM Single Wire Output data
 
 PYSWO is a python module to read and understand the binary stream output by a Single Wire Output pin on a ARM Cortex.
 
