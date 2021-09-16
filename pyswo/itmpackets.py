@@ -58,10 +58,10 @@ class ItmDwtExceptionEvent(enum.IntEnum):
     IDEE_EXIT = 0x02
     IDEE_RETURN = 0x03
 
-class ItmPacket():
+class ItmPacket():  # pylint: disable=too-few-public-methods
     """ Base class for all ITM packets """
 
-class ItmSourcePacket(ItmPacket):
+class ItmSourcePacket(ItmPacket):  # pylint: disable=too-few-public-methods
     """ Base class for all ITM "source" packets, e.g. an Instrumentation packet or a Hardware
     source packet.
 
@@ -69,14 +69,14 @@ class ItmSourcePacket(ItmPacket):
     a payload of 1, 2 or 4 bytes.
     """
 
-class ItmProtocolPacket(ItmPacket):
+class ItmProtocolPacket(ItmPacket):  # pylint: disable=too-few-public-methods
     """ Base class for all ITM "protocol" packets
 
     Protocol packets have a header byte of 0bxxxxxxSS, where SS is 0b00 but header byte is not
     0b00000000.
     """
 
-class ItmDwtEventCounterPacket(ItmSourcePacket):
+class ItmDwtEventCounterPacket(ItmSourcePacket):   # pylint: disable=too-few-public-methods
     """ ITM DWT Event Counter packet
 
     The DWT unit generates an Event counter packet when a counter value wraps round to zero, that
@@ -95,7 +95,7 @@ class ItmDwtEventCounterPacket(ItmSourcePacket):
     def __repr__(self):
         return "<ItmDwtEventCounterPacket(event=%r)>" % (self.event)
 
-class ItmExceptionEventPacket(ItmSourcePacket):
+class ItmExceptionEventPacket(ItmSourcePacket):  # pylint: disable=too-few-public-methods
     """ ITM Exception Event packet
 
     Issued by DWT when the core enter an exception state
@@ -108,7 +108,7 @@ class ItmExceptionEventPacket(ItmSourcePacket):
         return "<ItmExceptionEventPacket(exception_number=%d, event_type=%r>" % \
             (self.exception_number, self.event_type)
 
-class ItmPcSamplePacket(ItmSourcePacket):
+class ItmPcSamplePacket(ItmSourcePacket):  # pylint: disable=too-few-public-methods
     """ ITM PC Sampling packet
 
     Issued by DWT at regular interval
@@ -122,7 +122,7 @@ class ItmPcSamplePacket(ItmSourcePacket):
         # otherwise it's a packet with a PC
         return "<ItmPcSamplePacket(program_counter=0x%.8x)>" % self.program_counter
 
-class ItmDwtPcPacket(ItmSourcePacket):
+class ItmDwtPcPacket(ItmSourcePacket):  # pylint: disable=too-few-public-methods
     """ ITM DWT Data trace PC value packet
 
     Issued by DWT when a comparator in DWT is trigger
@@ -135,7 +135,7 @@ class ItmDwtPcPacket(ItmSourcePacket):
     def __repr__(self):
         return "<ItmDataTracePcValue(comp=%d, PC=%.8x)>" % (self.comp, self.program_counter)
 
-class ItmDwtAddrOffsetPacket(ItmSourcePacket):
+class ItmDwtAddrOffsetPacket(ItmSourcePacket):  # pylint: disable=too-few-public-methods
     """ ITM DWT Data trace address offset packet
 
     Issued by DWT when a comparator in DWT is trigger
@@ -149,7 +149,7 @@ class ItmDwtAddrOffsetPacket(ItmSourcePacket):
         return "<ItmDwtAddrOffsetPacket(comp=%d, addr_offset=%.8x)>" % \
             (self.comp, self.address_offset)
 
-class ItmDwtDataValuePacket(ItmSourcePacket):
+class ItmDwtDataValuePacket(ItmSourcePacket):  # pylint: disable=too-few-public-methods
     """ ITM DWT Data value packet
 
     Issued by DWT when a comparator in DWT is trigger
@@ -165,7 +165,7 @@ class ItmDwtDataValuePacket(ItmSourcePacket):
         return "<ItmDwtDataValuePacket(comp=%d, value=%x (%d bits), write=%s)>" % \
             (self.comp, self.value, self.size*8, self.is_write)
 
-class ItmSwPacket(ItmSourcePacket):
+class ItmSwPacket(ItmSourcePacket):  # pylint: disable=too-few-public-methods
     """ ITM Software packet
 
     Packet used for instrumentation. Issued when software write the corresponding stimulis port
@@ -177,7 +177,7 @@ class ItmSwPacket(ItmSourcePacket):
     def __repr__(self):
         return "<ItmSwPacket(channel=%d, payload=%r)>" % (self.channel, self.payload)
 
-class ItmOverflowPacket(ItmProtocolPacket):
+class ItmOverflowPacket(ItmProtocolPacket):  # pylint: disable=too-few-public-methods
     """ ITM Overflow packet
 
     The ITM outputs an Overflow packet if:
@@ -187,7 +187,7 @@ class ItmOverflowPacket(ItmProtocolPacket):
         - the Local timestamp counter overflows.
     """
 
-class ItmLocalTsPacket(ItmProtocolPacket):
+class ItmLocalTsPacket(ItmProtocolPacket):  # pylint: disable=too-few-public-methods
     """ ITM Local Timestamp packet
 
     A Local timestamp packet encodes timestamp information, for generic control and
@@ -207,7 +207,7 @@ class ItmLocalTsPacket(ItmProtocolPacket):
         return "<ItmLocalTsPacket(timestamp=%d, time_control=%s (0x%x))" % \
             (self.timestamp, self.time_control.name, self.time_control.value)
 
-class ItmGlobalTsPacket(ItmProtocolPacket):
+class ItmGlobalTsPacket(ItmProtocolPacket):  # pylint: disable=too-few-public-methods
     """ ITM Global Timestamp packet
 
     If an implementation supports global timestamping, the ITM generates Global timestamp packets
@@ -240,7 +240,7 @@ class ItmGlobalTsPacket(ItmProtocolPacket):
 
         return "<ItmGlobalTsPacket(type=%s, timestamp=%d)" % (self.gts_type, self.timestamp)
 
-class ItmExtensionPacket(ItmProtocolPacket):
+class ItmExtensionPacket(ItmProtocolPacket):  # pylint: disable=too-few-public-methods
     """ ITM Extension packet
 
     An Extension packet provides additional information about the identified source.
