@@ -45,8 +45,8 @@ WORD_SIZE=4
 
 class ItmDecoder():
     """ Parse stream of ITM binaries packets and output python object representing input packets"""
-    def __init__(self, feeder):
-        assert callable(feeder)
+    def __init__(self, feeder=None):
+        assert feeder is None or callable(feeder)
 
         self.feeder = feeder
         self.byte_stream = b''
@@ -56,10 +56,21 @@ class ItmDecoder():
         self.synced = False
 
 
-    def __iter__(self):
+    def feed(self, data):
+        """ Enqueue new data stream to the ItmDecoder
 
-        new_data = self.feeder()
-        self.byte_stream += new_data
+        It is mandatory to 'feed' the ItmDecoder manually if no feeder function was provided at
+        decoder instanciation.
+
+        Data are not decoded here.
+        """
+        assert isinstance(data, bytes)
+        self.byte_stream += data
+
+    def __iter__(self):
+        if self.feeder:
+            new_data = self.feeder()
+            self.byte_stream += new_data
         return self
 
     def source_pkt_decoder(self):
