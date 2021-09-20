@@ -39,9 +39,9 @@ from pyswo.itmpackets import (
     ItmExtensionPacket,
     )
 
-HEADER_SIZE=1
-MAX_PACKET_SIZE=5
-WORD_SIZE=4
+HEADER_SIZE = 1
+MAX_PACKET_SIZE = 5
+WORD_SIZE = 4
 
 class ItmDecoder():
     """ Parse stream of ITM binaries packets and output python object representing input packets"""
@@ -107,7 +107,7 @@ class ItmDecoder():
         assert header & 0x03 != 0, "Not a ITM source packet"
         assert header & 0x04 == 0, "Not a ITM SW source packet"
 
-        payload_size =  (0, 1, 2, 4)[header & 0x03]
+        payload_size = (0, 1, 2, 4)[header & 0x03]
         src_addr = header >> 3
 
         packet_size = HEADER_SIZE + payload_size
@@ -128,7 +128,7 @@ class ItmDecoder():
         assert header & 0x03 != 0, "Not a ITM source packet"
         assert header & 0x04 != 0, "Not a ITM HW source packet"
 
-        payload_size =  (0, 1, 2, 4)[header & 0x03]
+        payload_size = (0, 1, 2, 4)[header & 0x03]
         src_addr = header >> 3
 
         packet_size = HEADER_SIZE + payload_size
@@ -139,14 +139,14 @@ class ItmDecoder():
 
         payload = self.byte_stream[HEADER_SIZE:payload_size+HEADER_SIZE]
 
-        pkt=None
+        pkt = None
         if src_addr == 0:
             event = payload[0] & 0x2F
-            pkt=ItmDwtEventCounterPacket(event)
+            pkt = ItmDwtEventCounterPacket(event)
         elif src_addr == 1:
             exception_number = (payload[1] & 1) << 8 | payload[0]
             event_type = (payload[1] >> 4) & 3
-            pkt=ItmExceptionEventPacket(exception_number, event_type)
+            pkt = ItmExceptionEventPacket(exception_number, event_type)
 
         # Periodic PC sample packets
         elif  src_addr == 2:
@@ -158,7 +158,7 @@ class ItmDecoder():
             else:
                 sleep = False
                 program_counter = int.from_bytes(payload, "little")
-            pkt=ItmPcSamplePacket(program_counter, sleep)
+            pkt = ItmPcSamplePacket(program_counter, sleep)
         else:
             # Data trace packets
             comp = int((src_addr & 0x6) >> 1)
@@ -166,18 +166,18 @@ class ItmDecoder():
             data_trace_pkt_id = src_addr & 0x19
 
             if data_trace_pkt_id == 0x8:
-                pkt=ItmDwtPcPacket(
+                pkt = ItmDwtPcPacket(
                     comp=comp,
                     program_counter=value)
             if data_trace_pkt_id == 0x09:
-                pkt=ItmDwtAddrOffsetPacket(
+                pkt = ItmDwtAddrOffsetPacket(
                     comp=comp,
                     address_offset=value)
             elif data_trace_pkt_id in (0x10, 0x11):
                 pkt = ItmDwtDataValuePacket(comp=comp,
-                    value=value,
-                    is_write=bool(data_trace_pkt_id & 0x01),
-                    size=len(payload))
+                                            value=value,
+                                            is_write=bool(data_trace_pkt_id & 0x01),
+                                            size=len(payload))
             else:
                 # other are reserved values, skip
                 self.synced = False
@@ -275,13 +275,13 @@ class ItmDecoder():
             time_control = int((header&0x30) >> 4)
             timestamp = 0
             try:
-                payload_size, timestamp  = \
+                payload_size, timestamp = \
                     ItmDecoder.get_payload_with_continuation_byte(self.byte_stream)
             except StopIteration:
                 # Not enough data
                 return (0, None)
 
-            pkt=ItmLocalTsPacket(timestamp=timestamp, time_control=time_control)
+            pkt = ItmLocalTsPacket(timestamp=timestamp, time_control=time_control)
 
         # Local timestamp packet format 2, single byte
         # Format is 0b0TTT0000
@@ -297,7 +297,7 @@ class ItmDecoder():
                 self.synced = False
                 return (1, None)
 
-            pkt=ItmLocalTsPacket(timestamp, time_control)
+            pkt = ItmLocalTsPacket(timestamp, time_control)
         return (HEADER_SIZE + payload_size, pkt)
 
     def global_ts_pkt_decoder(self):
@@ -311,12 +311,12 @@ class ItmDecoder():
         # Payload 1 to 4 bytes
         assert (header & 0xDF) == 0x94, "Not a Global Timestamp packet"
 
-        wrap=None
-        clock_change=None
+        wrap = None
+        clock_change = None
         gts_type = 1 if header & 0x20 else 2
 
         try:
-            payload_size, timestamp  = \
+            payload_size, timestamp = \
                 ItmDecoder.get_payload_with_continuation_byte(self.byte_stream)
         except StopIteration:
             # Not enough data
@@ -328,7 +328,7 @@ class ItmDecoder():
             wrap = bool((timestamp & 0x8000000)>>27)
             timestamp = timestamp & 0xC000000
 
-        pkt=ItmGlobalTsPacket(gts_type, timestamp, wrap=wrap, clock_change=clock_change)
+        pkt = ItmGlobalTsPacket(gts_type, timestamp, wrap=wrap, clock_change=clock_change)
         return (HEADER_SIZE + payload_size, pkt)
 
     def extension_pkt_decoder(self):
@@ -349,7 +349,7 @@ class ItmDecoder():
             return (HEADER_SIZE, pkt)
 
         try:
-            payload_size, last_ext_bits  = \
+            payload_size, last_ext_bits = \
                 ItmDecoder.get_payload_with_continuation_byte(self.byte_stream)
         except StopIteration:
             # Not enough data
@@ -385,9 +385,9 @@ class ItmDecoder():
 
 
             if header & 0x03:
-                pkt_decoder=self.source_pkt_decoder
+                pkt_decoder = self.source_pkt_decoder
             else:
-                pkt_decoder=self.protocol_pkt_decoder
+                pkt_decoder = self.protocol_pkt_decoder
 
             (consumed_len, packet) = pkt_decoder()
 

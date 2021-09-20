@@ -26,7 +26,7 @@
 
 import enum
 
-MAX_PACKET_SIZE=5
+MAX_PACKET_SIZE = 5
 
 class ItmTimeControl(enum.IntEnum):
     """ Values for Time Control (TC) field in ITM timestamp packets """
@@ -220,10 +220,10 @@ class ItmGlobalTsPacket(ItmProtocolPacket):  # pylint: disable=too-few-public-me
           required the ITM always transmits it in full, as a five-byte packet.
     """
     def __init__(self, gts_type, timestamp, wrap=None, clock_change=None):
-        self.gts_type=ItmGtsType(gts_type)
-        self.timestamp=timestamp
-        self.wrap=wrap
-        self.clock_change=clock_change
+        self.gts_type = ItmGtsType(gts_type)
+        self.timestamp = timestamp
+        self.wrap = wrap
+        self.clock_change = clock_change
 
         assert (self.gts_type == ItmGtsType.IGTS_1 and self.wrap is not None) or \
             ((self.gts_type == ItmGtsType.IGTS_2 and self.wrap is None)), \
