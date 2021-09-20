@@ -409,23 +409,23 @@ class ItmDecoder():
 
 if __name__ == "__main__":
     import socket
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(("localhost", 50003))
+    listen_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    listen_socket.connect(("localhost", 50003))
 
     def itm_feeder():
         """ Read ITM stream from TCP connection """
         data = []
         while not data:
-            data = s.recv(1024)
+            data = listen_socket.recv(1024)
             if not data:
                 print("reconnect")
-                s.shutdown(socket.SHUT_RDWR)
-                s.connect(("localhost", 50003))
+                listen_socket.shutdown(socket.SHUT_RDWR)
+                listen_socket.connect(("localhost", 50003))
         return data
 
 
     decoder = ItmDecoder(itm_feeder)
 
     while True:
-        for itmPacket in decoder:
-            print(itmPacket)
+        for itm_packet in decoder:
+            print(itm_packet)
