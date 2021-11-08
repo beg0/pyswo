@@ -141,9 +141,15 @@ class ItmDecoder():
 
         pkt = None
         if src_addr == 0:
+            if packet_size != 1:
+                self.synced = False
+                return (1, None)
             event = payload[0] & 0x2F
             pkt = ItmDwtEventCounterPacket(event)
         elif src_addr == 1:
+            if packet_size != 2:
+                self.synced = False
+                return (1, None)
             exception_number = (payload[1] & 1) << 8 | payload[0]
             event_type = (payload[1] >> 4) & 3
             pkt = ItmExceptionEventPacket(exception_number, event_type)
