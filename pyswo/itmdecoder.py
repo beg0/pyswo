@@ -43,6 +43,9 @@ HEADER_SIZE = 1
 MAX_PACKET_SIZE = 5
 WORD_SIZE = 4
 
+class OutOfSyncException(Exception):
+    """ Raised when unexpect byte is encountred, meaning that system is out of sync """
+
 class ItmDecoder():
     """ Parse stream of ITM binaries packets and output python object representing input packets"""
     def __init__(self, feeder=None):
@@ -142,14 +145,12 @@ class ItmDecoder():
         pkt = None
         if src_addr == 0:
             if packet_size != 1:
-                self.synced = False
-                return (1, None)
+                raise OutOfSyncException()
             event = payload[0] & 0x2F
             pkt = ItmDwtEventCounterPacket(event)
         elif src_addr == 1:
             if packet_size != 2:
-                self.synced = False
-                return (1, None)
+                raise OutOfSyncException()
             exception_number = (payload[1] & 1) << 8 | payload[0]
             event_type = (payload[1] >> 4) & 3
             pkt = ItmExceptionEventPacket(exception_number, event_type)
@@ -186,8 +187,7 @@ class ItmDecoder():
                                             size=len(payload))
             else:
                 # other are reserved values, skip
-                self.synced = False
-                return(1, None)
+                raise OutOfSyncException()
 
         assert pkt is not None, "Can't identify packet type with header %.8X" % header
         return (packet_size, pkt)
@@ -257,8 +257,7 @@ class ItmDecoder():
         # If we are here, it means we have a reserved packet
         # 0b0xxx0100, 0bx1110000, 0b10x00100, 0b11xx0100,
         # Just ignore it
-        self.synced = False
-        return (1, None)
+        raise OutOfSyncException()
 
     def local_ts_pkt_decoder(self):
         """ Extract ItmLocalTsPacket() packet from ITM byte stream """
@@ -300,8 +299,7 @@ class ItmDecoder():
             # 0 would means it's part of a sync packet
             # 7 would means it's part of a overflow packet
             if timestamp in (0x00, 0x07):
-                self.synced = False
-                return (1, None)
+                raise OutOfSyncException()
 
             pkt = ItmLocalTsPacket(timestamp, time_control)
         return (HEADER_SIZE + payload_size, pkt)
@@ -395,7 +393,13 @@ class ItmDecoder():
             else:
                 pkt_decoder = self.protocol_pkt_decoder
 
-            (consumed_len, packet) = pkt_decoder()
+            try:
+                (consumed_len, packet) = pkt_decoder()
+
+            except OutOfSyncException:
+                self.synced = False
+                self.byte_stream = self.byte_stream[1:]
+                continue
 
             if consumed_len > 0:
                 self.byte_stream = self.byte_stream[consumed_len:]
