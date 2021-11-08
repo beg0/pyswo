@@ -76,80 +76,34 @@ class ItmDecoder():
             self.byte_stream += new_data
         return self
 
-    def source_pkt_decoder(self):
-        """ Parse an ITM "source" packet, e.g. not a protocol packet.
-
-        Source packets are identified with the last 2 bits of header byte not null
-
-        There is 2 type of source packet, depending on value of bit #2:
-          - Case of Instrumentation packet (Software source, application)
-            Format is 0bAAAAA0SS, SS not 0b00
-            SS = size of payload
-            AAAAA = Source Address
-
-          - Case of Hardware packet (Hardware source, diagnostics)
-            Format is 0bAAAAA1SS, SS not 0b00
-            SS = size of payload
-            AAAAA = Packet type discriminator ID
-        """
-        header = self.byte_stream[0]
-
-        assert header & 0x03 != 0, "Not a ITM source packet"
-
-        # This is a SW packet
-        if header & 0x04 == 0:
-            return self.sw_source_pkt_decoder()
-
-        return self.hw_source_pkt_decoder()
-
-    def sw_source_pkt_decoder(self):
-        """ Extract ItmSwPacket() packet from ITM byte stream """
-
-        header = self.byte_stream[0]
+    @staticmethod
+    def sw_source_pkt_extractor(header, payload):
+        """ Extract ItmSwPacket() packet ITM header & payload pair """
 
         assert header & 0x03 != 0, "Not a ITM source packet"
         assert header & 0x04 == 0, "Not a ITM SW source packet"
 
-        payload_size = (0, 1, 2, 4)[header & 0x03]
         src_addr = header >> 3
+        return  ItmSwPacket(src_addr, payload)
 
-        packet_size = HEADER_SIZE + payload_size
-
-        # if we can't read the full payload,
-        if packet_size > len(self.byte_stream):
-            return (0, None)
-
-        payload = self.byte_stream[HEADER_SIZE:payload_size+HEADER_SIZE]
-
-        return (packet_size, ItmSwPacket(src_addr, payload))
-
-    def hw_source_pkt_decoder(self):
-        """ Extract ItmDwt*Packet() packet from ITM byte stream """
-
-        header = self.byte_stream[0]
+    @staticmethod
+    def hw_source_pkt_extractor(header, payload):
+        """ Extract ItmDwt*Packet() packet from ITM header & payload pair """
 
         assert header & 0x03 != 0, "Not a ITM source packet"
         assert header & 0x04 != 0, "Not a ITM HW source packet"
 
-        payload_size = (0, 1, 2, 4)[header & 0x03]
         src_addr = header >> 3
 
-        packet_size = HEADER_SIZE + payload_size
-
-        # if we can't read the full payload,
-        if packet_size > len(self.byte_stream):
-            return (0, None)
-
-        payload = self.byte_stream[HEADER_SIZE:payload_size+HEADER_SIZE]
 
         pkt = None
         if src_addr == 0:
-            if packet_size != 1:
+            if len(payload) != 1:
                 raise OutOfSyncException()
             event = payload[0] & 0x2F
             pkt = ItmDwtEventCounterPacket(event)
         elif src_addr == 1:
-            if packet_size != 2:
+            if len(payload) != 2:
                 raise OutOfSyncException()
             exception_number = (payload[1] & 1) << 8 | payload[0]
             event_type = (payload[1] >> 4) & 3
@@ -190,6 +144,44 @@ class ItmDecoder():
                 raise OutOfSyncException()
 
         assert pkt is not None, "Can't identify packet type with header %.8X" % header
+        return pkt
+
+    def source_pkt_decoder(self):
+        """ Parse an ITM "source" packet, e.g. not a protocol packet.
+
+        Source packets are identified with the last 2 bits of header byte not null
+
+        There is 2 type of source packet, depending on value of bit #2:
+          - Case of Instrumentation packet (Software source, application)
+            Format is 0bAAAAA0SS, SS not 0b00
+            SS = size of payload
+            AAAAA = Source Address
+
+          - Case of Hardware packet (Hardware source, diagnostics)
+            Format is 0bAAAAA1SS, SS not 0b00
+            SS = size of payload
+            AAAAA = Packet type discriminator ID
+        """
+        header = self.byte_stream[0]
+
+        assert header & 0x03 != 0, "Not a ITM source packet"
+
+        payload_size = (0, 1, 2, 4)[header & 0x03]
+
+        packet_size = HEADER_SIZE + payload_size
+
+        # if we can't read the full payload,
+        if packet_size > len(self.byte_stream):
+            return (0, None)
+
+        payload = self.byte_stream[HEADER_SIZE:payload_size+HEADER_SIZE]
+
+        # This is a SW packet
+        if header & 0x04 == 0:
+            pkt = ItmDecoder.sw_source_pkt_extractor(header, payload)
+        else:
+            pkt = ItmDecoder.hw_source_pkt_extractor(header, payload)
+
         return (packet_size, pkt)
 
     @staticmethod
