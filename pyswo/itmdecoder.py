@@ -37,6 +37,7 @@ from pyswo.itmpackets import (
     ItmDwtAddrOffsetPacket,
     ItmDwtDataValuePacket,
     ItmExtensionPacket,
+    ItmGtsType
     )
 
 HEADER_SIZE = 1
@@ -408,6 +409,63 @@ class ItmDecoder():
         # Buffer empty
         raise StopIteration
 
+
+class TimeTrackingItmDecoder(ItmDecoder):
+    """ An ITM decoder that is able to keep track of time between packets
+
+    This decoder add 'timestamp' and 'time_control' attribute to every packets. It consumes
+    ItmLocalTsPacket packets
+
+    Note: To have timestamp, the bit TCR_TSENA of ITM block to be set.
+    """
+    def __init__(self, feeder=None):
+        super().__init__(feeder)
+
+        # The cumulative value for all delta of time sent with ItmLocalTsPacket
+        self.last_timestamp = 0
+
+        # keep track of global timestamp sent in ItmGlobalTsPacket
+        # It is required to have a specific (member) variable here as the global timestamp is
+        # send in 2 differents packets GTS_1 & GTS_2
+        self.global_timestamp = 0
+
+    def __next__(self):
+        # Note: unlike the global timestamp, we don't keep the time_control from one packet to
+        # another. The time_control field of ItmLocalTsPacket only apply to the immediately
+        # following packet
+        time_control = None
+
+        pkt = super().__next__()
+        while isinstance(pkt, (ItmLocalTsPacket, ItmGlobalTsPacket)):
+
+            # pylint: disable=no-member
+            if isinstance(pkt, ItmLocalTsPacket):
+                self.last_timestamp += pkt.timestamp
+                self.global_timestamp += pkt.timestamp
+                time_control = pkt.time_control
+            elif isinstance(pkt, ItmGlobalTsPacket):
+                if pkt.gts_type == ItmGtsType.IGTS_1:
+                    self.global_timestamp = \
+                        (self.global_timestamp & 0x3FFFFFF) | (pkt.timestamp << 0)
+                elif pkt.gts_type == ItmGtsType.IGTS_2:
+                    self.global_timestamp = \
+                        (self.global_timestamp & 0xFFFFFC000000) | (pkt.timestamp << 26)
+
+                # Update timestamp with global timestamp
+                # Two asumptions here:
+                #  - assume GTS_1 will arrives after GTS_2 (which is what I observed in real life)
+                #  - if self.global_timestamp is null, it means the global timestamping is not
+                #  enabled in hardware
+                if pkt.gts_type == ItmGtsType.IGTS_1 and self.global_timestamp != 0:
+                    self.last_timestamp = self.global_timestamp
+
+            pkt = super().__next__()
+
+        # Update packet with timestamp information
+        pkt.timestamp = self.last_timestamp
+        pkt.time_control = time_control
+
+        return pkt
 
 if __name__ == "__main__":
     import socket
