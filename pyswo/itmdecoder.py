@@ -322,7 +322,7 @@ class ItmDecoder():
             # For GTS type 1, bits 26 and 27 has special meanings
             clock_change = bool((timestamp & 0x4000000)>>26)
             wrap = bool((timestamp & 0x8000000)>>27)
-            timestamp = timestamp & 0xC000000
+            timestamp = timestamp & 0x3FFFFFF
 
         pkt = ItmGlobalTsPacket(gts_type, timestamp, wrap=wrap, clock_change=clock_change)
         return (HEADER_SIZE + payload_size, pkt)
