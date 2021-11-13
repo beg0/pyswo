@@ -45,7 +45,7 @@ MAX_PACKET_SIZE = 5
 WORD_SIZE = 4
 
 class OutOfSyncException(Exception):
-    """ Raised when unexpect byte is encountred, meaning that system is out of sync """
+    """ Raised when unexpected byte is encountered, meaning that system is out of sync """
 
 class ItmDecoder():
     """ Parse stream of ITM binaries packets and output python object representing input packets"""
@@ -64,7 +64,7 @@ class ItmDecoder():
         """ Enqueue new data stream to the ItmDecoder
 
         It is mandatory to 'feed' the ItmDecoder manually if no feeder function was provided at
-        decoder instanciation.
+        decoder instantiation.
 
         Data are not decoded here.
         """
@@ -452,7 +452,7 @@ class TimeTrackingItmDecoder(ItmDecoder):
                         (self.global_timestamp & 0xFFFFFC000000) | (pkt.timestamp << 26)
 
                 # Update timestamp with global timestamp
-                # Two asumptions here:
+                # Two assumptions here:
                 #  - assume GTS_1 will arrives after GTS_2 (which is what I observed in real life)
                 #  - if self.global_timestamp is null, it means the global timestamping is not
                 #  enabled in hardware
