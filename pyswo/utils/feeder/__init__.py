@@ -51,7 +51,7 @@ def _import_feeders():
                 if looks_like_feeder(attr):
                     feeder_classes.append(attr)
         except ImportError:
-            pass # ignore import error and assume use does not have the required dependencies
+            pass # ignore import error and assume user does not have the required dependencies
     return feeder_classes
 
 FEEDER_CLASSES = _import_feeders()
