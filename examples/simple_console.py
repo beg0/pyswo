@@ -67,7 +67,7 @@ def  cmp_range(range1, range2):
     # Then sort by (inverted) range (e.g. larger ranges comes first)
     return range2[1] - range1[1]
 
-cli_parser = argparse.ArgumentParser()
+cli_parser = argparse.ArgumentParser(description=__doc__)
 cli_parser.add_argument("-c", "--swo-channel",
                         type=int,
                         nargs='*',
