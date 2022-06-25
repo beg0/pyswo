@@ -71,13 +71,13 @@ def main():
     print(f"sleep= {sleep_counter}")
     #print(f"pc= {pc_usage}")
 
-    print_hotest_functions(dwarfinfo, pc_usage, total_pc_sample)
+    print_hotest_functions(elffile, dwarfinfo, pc_usage, total_pc_sample)
 
     print_hotest_lines(dwarfinfo, pc_usage, total_pc_sample)
 
-def print_hotest_functions(dwarfinfo, pc_usage, total_pc_sample):
+def print_hotest_functions(elffile, dwarfinfo, pc_usage, total_pc_sample):
     """ Display the function that use the most the MPU"""
-    func_usage = get_usage_by_func(dwarfinfo, pc_usage)
+    func_usage = get_usage_by_func(elffile, dwarfinfo, pc_usage)
 
     #print(f"func_usage={func_usage}")
 
@@ -110,16 +110,28 @@ def print_hotest_lines(dwarfinfo, pc_usage, total_pc_sample):
         percentage_usage = 100.0*fileline_usage[fileline]/total_pc_sample
         print(f"{fileline:20s}: {percentage_usage:.2f}%")
 
-def get_usage_by_func(dwarfinfo, pc_usage):
+def get_usage_by_func(elffile, dwarfinfo, pc_usage):
     """ Get CPU usage per function"""
     func_usage = defaultdict(lambda: 0)
     fnr = FuncNameRegistry(dwarfinfo)
 
+    func_symbols = get_all_func_symbols(elffile)
+    func_symbols.sort(key=lambda x: x['address'])
+    func_addresses = [x['address'] for x in func_symbols]
+
     for pc in pc_usage:
         funcname = fnr.find_func(pc)
 
+        # if we can't find info in DWARF, fallback to symbols table
         if funcname is None:
-            funcname = f"*unknown* ({pc:8x})"
+            idx = bisect.bisect(func_addresses, pc)
+            if idx == 0:
+                funcname = f"*unknown* ({pc:8x})"
+            else:
+                nearest_func = func_symbols[idx - 1]
+                nearest_func_name = nearest_func['name']
+                nearest_func_offset = pc-nearest_func['address']
+                funcname = f"<{nearest_func_name}+{nearest_func_offset:x}>"
 
         func_usage[funcname] += pc_usage[pc]
     return func_usage
@@ -304,5 +316,22 @@ class FuncNameRegistry():
             return func_info['func_name']
         return None
 
+def get_all_func_symbols(elffile):
+    """ Extract all symbols related to functions from an ELF file
+
+    These symbols are a good indicator of where a function start.
+    """
+    func_symbols = []
+    symtab_section=elffile.get_section_by_name(".symtab")
+    if not symtab_section:
+        return []
+
+    for symbol in symtab_section.iter_symbols():
+        try:
+            if symbol['st_info']['type'] == 'STT_FUNC':
+                func_symbols.append({'name': symbol.name, 'address': symbol['st_value']})
+        except KeyError:
+            continue
+    return func_symbols
 
 main()
