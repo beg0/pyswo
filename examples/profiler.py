@@ -154,39 +154,6 @@ def get_usage_by_file_line(dwarfinfo, pc_usage):
 
         line_usage[fileline] += pc_usage[pc]
     return line_usage
-
-
-def decode_file_line(dwarfinfo, address):
-    """ Get the source code line associated with an PC address"""
-
-    # Go over all the line programs in the DWARF information, looking for
-    # one that describes the given address.
-    for CU in dwarfinfo.iter_CUs():
-        # First, look at line programs to find the file/line for the address
-        lineprog = dwarfinfo.line_program_for_CU(CU)
-        prevstate = None
-        for entry in lineprog.get_entries():
-            # We're interested in those entries where a new state is assigned
-            if entry.state is None:
-                continue
-            # Looking for a range of addresses in two consecutive states that
-            # contain the required address.
-            if prevstate and prevstate.address <= address < entry.state.address:
-                filename = lineprog['file_entry'][prevstate.file - 1].name
-                line = prevstate.line
-                return filename, line
-            if entry.state.end_sequence:
-                # For the state with `end_sequence`, `address` means the address
-                # of the first byte after the target machine instruction
-                # sequence and other information is meaningless. We clear
-                # prevstate so that it's not used in the next iteration. Address
-                # info is used in the above comparison to see if we need to use
-                # the line information for the prevstate.
-                prevstate = None
-            else:
-                prevstate = entry.state
-    return None, None
-
 class FuncNameRegistry():
     """ Find function names from DWARF debug info """
     def __init__(self, dwarfinfo = None, skip_pc_zero=True):
