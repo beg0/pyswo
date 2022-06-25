@@ -71,18 +71,18 @@ def main():
     print(f"sleep= {sleep_counter}")
     #print(f"pc= {pc_usage}")
 
-    print_hotest_functions(elffile, dwarfinfo, pc_usage, total_pc_sample)
+    print_hottest_functions(elffile, dwarfinfo, pc_usage, total_pc_sample)
 
-    print_hotest_lines(dwarfinfo, pc_usage, total_pc_sample)
+    print_hottest_lines(dwarfinfo, pc_usage, total_pc_sample)
 
-def print_hotest_functions(elffile, dwarfinfo, pc_usage, total_pc_sample):
+def print_hottest_functions(elffile, dwarfinfo, pc_usage, total_pc_sample):
     """ Display the function that use the most the MPU"""
     func_usage = get_usage_by_func(elffile, dwarfinfo, pc_usage)
 
     #print(f"func_usage={func_usage}")
 
 
-    print("Hotest functions")
+    print("Hottest functions")
     sorted_func_usage = sorted(func_usage,
                                key=lambda func_name: func_usage[func_name],
                                reverse=True)
@@ -97,10 +97,10 @@ def print_hotest_functions(elffile, dwarfinfo, pc_usage, total_pc_sample):
         print(f"{func_name_latin:20s}: {percentage_usage:.2f}%")
     print("")
 
-def print_hotest_lines(dwarfinfo, pc_usage, total_pc_sample):
+def print_hottest_lines(dwarfinfo, pc_usage, total_pc_sample):
     """ Display the source code line that use the most the MPU"""
 
-    print("Hotest lines")
+    print("Hottest lines")
     fileline_usage = get_usage_by_file_line(dwarfinfo, pc_usage)
     sorted_fileline_usage = sorted(fileline_usage,
                                    key=lambda fileline: fileline_usage[fileline],
