@@ -138,9 +138,11 @@ def get_usage_by_func(elffile, dwarfinfo, pc_usage):
 
 def get_usage_by_file_line(dwarfinfo, pc_usage):
     """ Get CPU usage per source code line"""
-    line_usage = {}
+    line_usage = defaultdict(lambda: 0)
+    flr = FileLineRegistry(dwarfinfo)
+
     for pc in pc_usage:
-        file, line = decode_file_line(dwarfinfo, pc)
+        file, line = flr.find_file_line(pc)
 
         fileline = ""
         if file is None:
@@ -150,10 +152,7 @@ def get_usage_by_file_line(dwarfinfo, pc_usage):
         else:
             fileline = str(file, 'utf8') + ":" + str(line)
 
-        if fileline not in line_usage:
-            line_usage[fileline] = pc_usage[pc]
-        else:
-            line_usage[fileline] += pc_usage[pc]
+        line_usage[fileline] += pc_usage[pc]
     return line_usage
 
 
@@ -251,6 +250,63 @@ class FuncNameRegistry():
         if func_info['lowpc'] <= address < func_info['highpc']:
             return func_info['func_name']
         return None
+
+class FileLineRegistry():
+    """ Find source code line of a PC address using DWARF debug info """
+
+    def __init__(self, dwarfinfo = None, skip_pc_zero=True):
+        self.file_line_infos = []
+        self.file_line_lowpc = []
+
+        if dwarfinfo:
+            self.update_dwarf_info(dwarfinfo, skip_pc_zero=skip_pc_zero)
+
+    def update_dwarf_info(self, dwarfinfo, skip_pc_zero=True):
+        """ Update source code line info from DWARF info"""
+        file_line_infos=[]
+        # Go over all the line programs in the DWARF information, looking for
+        # one that describes the given address.
+        for CU in dwarfinfo.iter_CUs():
+            # First, look at line programs to find the file/line for the address
+            lineprog = dwarfinfo.line_program_for_CU(CU)
+            prevstate = None
+            for entry in lineprog.get_entries():
+                # We're interested in those entries where a new state is assigned
+                if entry.state is None:
+                    continue
+                # Looking for a range of addresses in two consecutive states that
+                # contain the required address.
+                if prevstate and not (skip_pc_zero and prevstate.address == 0):
+                    file_line_infos.append(
+                        {
+                            'lowpc': prevstate.address,
+                            'highpc': entry.state.address,
+                            'filename': lineprog['file_entry'][prevstate.file - 1].name,
+                            'line': prevstate.line
+                        }
+                    )
+                if entry.state.end_sequence:
+                    # For the state with `end_sequence`, `address` means the address
+                    # of the first byte after the target machine instruction
+                    # sequence and other information is meaningless. We clear
+                    # prevstate so that it's not used in the next iteration. Address
+                    # info is used in the above comparison to see if we need to use
+                    # the line information for the prevstate.
+                    prevstate = None
+                else:
+                    prevstate = entry.state
+        self.file_line_infos = sorted(file_line_infos, key=lambda x: x['lowpc'])
+        self.file_line_lowpc = [ x['lowpc'] for x in self.file_line_infos ]
+
+    def find_file_line(self, address):
+        """ Resolve source code line from code address """
+        idx = bisect.bisect_right(self.file_line_lowpc, address)
+        if idx == 0:
+            return None, None
+        func_info = self.file_line_infos[idx - 1]
+        if func_info['lowpc'] <= address < func_info['highpc']:
+            return (func_info['filename'], func_info['line'])
+        return None, None
 
 def get_all_func_symbols(elffile):
     """ Extract all symbols related to functions from an ELF file
