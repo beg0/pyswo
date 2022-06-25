@@ -24,9 +24,13 @@
 # SOFTWARE.
 #
 """ Extract usage information from PC sampling of ITM stream """
+from collections import defaultdict
 from argparse import ArgumentParser, FileType
+import bisect
+
 from elftools.dwarf.descriptions import describe_form_class
 from elftools.elf.elffile import ELFFile
+
 from pyswo.itmdecoder import ItmDecoder
 from pyswo.itmpackets import ItmPcSamplePacket
 from pyswo.utils.feeder import add_all_feeders_to_argparse
@@ -53,7 +57,7 @@ def main():
     itmdecoder = ItmDecoder(feeder=swo_feeder)
 
     sleep_counter = 0
-    pc_usage = {}
+    pc_usage = defaultdict(lambda:0)
     total_pc_sample = 0
     for pkt in itmdecoder:
         if isinstance(pkt, ItmPcSamplePacket):
@@ -61,10 +65,7 @@ def main():
             if pkt.sleep:
                 sleep_counter += 1
             else:
-                if pkt.program_counter not in pc_usage:
-                    pc_usage[pkt.program_counter] = 1
-                else:
-                    pc_usage[pkt.program_counter] += 1
+                pc_usage[pkt.program_counter] += 1
 
     print(f"total= {total_pc_sample}")
     print(f"sleep= {sleep_counter}")
@@ -111,26 +112,16 @@ def print_hotest_lines(dwarfinfo, pc_usage, total_pc_sample):
 
 def get_usage_by_func(dwarfinfo, pc_usage):
     """ Get CPU usage per function"""
-    func_usage = {}
-    subprogram_die = []
-    for CU in dwarfinfo.iter_CUs():
-        for DIE in CU.iter_DIEs():
-            try:
-                if DIE.tag == 'DW_TAG_subprogram':
-                    subprogram_die.append(DIE)
-            except KeyError:
-                continue
+    func_usage = defaultdict(lambda: 0)
+    fnr = FuncNameRegistry(dwarfinfo)
 
     for pc in pc_usage:
-        funcname = decode_funcname2(subprogram_die, pc)
+        funcname = fnr.find_func(pc)
 
         if funcname is None:
             funcname = f"*unknown* ({pc:8x})"
 
-        if funcname not in func_usage:
-            func_usage[funcname] = pc_usage[pc]
-        else:
-            func_usage[funcname] += pc_usage[pc]
+        func_usage[funcname] += pc_usage[pc]
     return func_usage
 
 def get_usage_by_file_line(dwarfinfo, pc_usage):
@@ -248,5 +239,70 @@ def decode_file_line(dwarfinfo, address):
             else:
                 prevstate = entry.state
     return None, None
+
+class FuncNameRegistry():
+    """ Find function names from DWARF debug info """
+    def __init__(self, dwarfinfo = None, skip_pc_zero=True):
+        self.func_infos = []
+        self.func_lowpc = []
+
+        if dwarfinfo:
+            self.update_dwarf_info(dwarfinfo, skip_pc_zero=skip_pc_zero)
+
+    def update_dwarf_info(self, dwarfinfo, skip_pc_zero=True):
+        """ Update function names from DWARF info"""
+
+        func_infos = []
+        # Go over all DIEs in the DWARF information, looking for a subprogram
+        # entry with an address range that includes the given address. Note that
+        # this simplifies things by disregarding subprograms that may have
+        # split address ranges.
+        for CU in dwarfinfo.iter_CUs():
+            for DIE in CU.iter_DIEs():
+                try:
+                    if DIE.tag == 'DW_TAG_subprogram':
+                        lowpc = DIE.attributes['DW_AT_low_pc'].value
+                        if skip_pc_zero and lowpc == 0:
+                            continue
+
+                        # DWARF v4 in section 2.17 describes how to interpret the
+                        # DW_AT_high_pc attribute based on the class of its form.
+                        # For class 'address' it's taken as an absolute address
+                        # (similarly to DW_AT_low_pc); for class 'constant', it's
+                        # an offset from DW_AT_low_pc.
+                        highpc_attr = DIE.attributes['DW_AT_high_pc']
+                        highpc_attr_class = describe_form_class(highpc_attr.form)
+                        if highpc_attr_class == 'address':
+                            highpc = highpc_attr.value
+                        elif highpc_attr_class == 'constant':
+                            highpc = lowpc + highpc_attr.value
+                        else:
+                            print('Error: invalid DW_AT_high_pc class:',
+                                highpc_attr_class)
+                            continue
+
+                        func_infos.append(
+                            {
+                                'lowpc': lowpc,
+                                'highpc': highpc,
+                                'func_name': DIE.attributes['DW_AT_name'].value
+                            }
+                        )
+                except KeyError:
+                    continue
+
+        self.func_infos = sorted(func_infos, key=lambda x: x['lowpc'])
+        self.func_lowpc = [ x['lowpc'] for x in self.func_infos ]
+
+    def find_func(self, address):
+        """ Resolve function name from code address """
+        idx = bisect.bisect_right(self.func_lowpc, address)
+        if idx == 0:
+            return None
+        func_info = self.func_infos[idx - 1]
+        if func_info['lowpc'] <= address < func_info['highpc']:
+            return func_info['func_name']
+        return None
+
 
 main()
