@@ -33,17 +33,18 @@ from ._feeder_argparse import AbstractFeederGenerator, CreateFeederAction
 class FileFeederGenerator(AbstractFeederGenerator):
     """ Feeder generator to create a FileFeeder feeder"""
     def create(self):
-        return FileFeeder(self.config.input_file)
+        return FileFeeder(self.config.input_file, self.config.file_read_size)
 
 
 class FileFeeder:
     """ A SWO feeder that read ITM data from a plain file """
-    def __init__(self, input_file):
+    def __init__(self, input_file, chunk_size=-1):
         self.file = input_file
+        self.chunk_size = chunk_size
 
     def __call__(self):
         """ Read ITM stream from plain file """
-        data =  self.file.read()
+        data =  self.file.read(self.chunk_size)
         if not data:
             raise EOFError()
         return data
@@ -61,3 +62,10 @@ class FileFeeder:
                            help=_("Read SWO stream from a plain file"),
                            action=CreateFeederAction,
                            feeder_generator=FileFeederGenerator)
+
+        group.add_argument("--file-read-size",
+                           type=int,
+                           dest='file_read_size',
+                           default=-1,
+                           help=_("Number of bytes to read in file at a time. " +
+                           "Set to -1 to read as much data as possible at a time."))
