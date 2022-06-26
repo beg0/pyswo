@@ -50,16 +50,16 @@ class TcpFeederGenerator(AbstractFeederGenerator):
     def create(self):
         return TcpClient(self.config.tcp_host,
                          reconnect=self.config.tcp_reconnect,
-                         address_familly=self.config.tcp_address_familly)
+                         address_family=self.config.tcp_address_family)
 
 
 class TcpClient:
     """ A SWO feeder that read ITM data from a TCP connection """
-    def __init__(self, host, reconnect=False, address_familly=socket.AF_INET):
+    def __init__(self, host, reconnect=False, address_family=socket.AF_INET):
         self.host = host
         self.reconnect = reconnect
 
-        sock = socket.socket(address_familly, socket.SOCK_STREAM)
+        sock = socket.socket(address_family, socket.SOCK_STREAM)
         sock.connect(self.host)
         self.sock = sock
 
@@ -97,16 +97,16 @@ class TcpClient:
         group.add_argument("--reconnect",
                            action='store_true',
                            dest='tcp_reconnect',
-                           help=_("automatically recconnect to TCP server"))
+                           help=_("automatically reconnect to TCP server"))
         group.add_argument("--ipv4",
                            action='store_const',
-                           dest='tcp_address_familly',
+                           dest='tcp_address_family',
                            const=socket.AF_INET,
                            help=_("use IPv4 to connect to TCP server"))
         group.add_argument("--ipv6",
                            action='store_const',
-                           dest='tcp_address_familly',
+                           dest='tcp_address_family',
                            const=socket.AF_INET6,
                            help=_("use IPv6 to connect to TCP server"))
 
-        parser.set_defaults(tcp_address_familly=socket.AF_INET)
+        parser.set_defaults(tcp_address_family=socket.AF_INET)
