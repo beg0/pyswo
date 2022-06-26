@@ -59,13 +59,22 @@ def main():
     sleep_counter = 0
     pc_usage = defaultdict(lambda:0)
     total_pc_sample = 0
-    for pkt in itmdecoder:
-        if isinstance(pkt, ItmPcSamplePacket):
-            total_pc_sample += 1
-            if pkt.sleep:
-                sleep_counter += 1
-            else:
-                pc_usage[pkt.program_counter] += 1
+    try:
+        print("Start reading SWO stream. Press CTRL-C to exit")
+
+        while True:
+            for pkt in itmdecoder:
+                if isinstance(pkt, ItmPcSamplePacket):
+                    total_pc_sample += 1
+                    if pkt.sleep:
+                        sleep_counter += 1
+                    else:
+                        pc_usage[pkt.program_counter] += 1
+    except KeyboardInterrupt:
+        print("Capture interrupted by user")
+    except EOFError:
+        print("End of SWO stream")
+
 
     print(f"total= {total_pc_sample}")
     print(f"sleep= {sleep_counter}")
