@@ -43,7 +43,10 @@ class FileFeeder:
 
     def __call__(self):
         """ Read ITM stream from plain file """
-        return self.file.read()
+        data =  self.file.read()
+        if not data:
+            raise EOFError()
+        return data
 
     @staticmethod
     def add_to_argparser(parser):

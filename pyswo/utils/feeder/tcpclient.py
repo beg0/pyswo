@@ -72,9 +72,11 @@ class TcpClient:
             if not data:
                 self.sock.shutdown(socket.SHUT_RDWR)
 
-                #TODO: honnor self.reconnect
-                print("reconnect")
-                self.sock.connect(self.host)
+                if self.reconnect:
+                    print("reconnect")
+                    self.sock.connect(self.host)
+                else:
+                    raise EOFError
 
         return data
 
