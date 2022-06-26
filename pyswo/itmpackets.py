@@ -36,7 +36,7 @@ class ItmTimeControl(enum.IntEnum):
     ITC_DELAYED_DATA_EVENT = 3
 
 class ItmGtsType(enum.IntEnum):
-    """ Values for types of ITM Global Typestamp packets """
+    """ Values for types of ITM Global Timestamp packets """
     IGTS_1 = 1
     IGTS_2 = 2
     IGTS_LOWER_BITS = 1
@@ -83,7 +83,7 @@ class ItmDwtEventCounterPacket(ItmSourcePacket):   # pylint: disable=too-few-pub
     is, when:
 
         - a countup, or incrementing, counter overflows
-        - a countdown, or decrementing, counter underflows.
+        - a countdown, or decrementing, counter underflow.
 
     The packet has a single payload byte, containing a set of bits that show which counters have
     wrapped. Typically a single counter wraps, however the DWT can generate this packet with
@@ -168,7 +168,7 @@ class ItmDwtDataValuePacket(ItmSourcePacket):  # pylint: disable=too-few-public-
 class ItmSwPacket(ItmSourcePacket):  # pylint: disable=too-few-public-methods
     """ ITM Software packet
 
-    Packet used for instrumentation. Issued when software write the corresponding stimulis port
+    Packet used for instrumentation. Issued when software write the corresponding stimuli port
     """
     def __init__(self, channel, payload):
         self.channel = channel
