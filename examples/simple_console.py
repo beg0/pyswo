@@ -44,7 +44,7 @@ if hasattr(DEFAULT_OUTPUT_STREAM, 'buffer'):
     DEFAULT_OUTPUT_STREAM = DEFAULT_OUTPUT_STREAM.buffer
 
 def encoding(what):
-    """ Check encoding is valid - argpase compatible """
+    """ Check encoding is valid - argparse compatible """
     try:
         b'\x00'.decode(what)
     except LookupError:
@@ -52,7 +52,7 @@ def encoding(what):
     return what
 
 def compiled_pcre(what):
-    """ Check regexp is valid - argpase compatible """
+    """ Check regexp is valid - argparse compatible """
     try:
         return re.compile(what)
     except re.error as exception:
