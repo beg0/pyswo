@@ -426,7 +426,7 @@ class TimeTrackingItmDecoder(ItmDecoder):
 
         # keep track of global timestamp sent in ItmGlobalTsPacket
         # It is required to have a specific (member) variable here as the global timestamp is
-        # send in 2 differents packets GTS_1 & GTS_2
+        # send in 2 different packets GTS_1 & GTS_2
         self.global_timestamp = 0
 
     def __next__(self):
