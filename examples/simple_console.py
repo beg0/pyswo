@@ -47,8 +47,8 @@ def encoding(what):
     """ Check encoding is valid - argparse compatible """
     try:
         b'\x00'.decode(what)
-    except LookupError:
-        raise argparse.ArgumentTypeError("Not a valid encoding %r" % what)
+    except LookupError as exception:
+        raise argparse.ArgumentTypeError("Not a valid encoding %r" % what) from exception
     return what
 
 def compiled_pcre(what):
