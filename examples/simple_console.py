@@ -200,4 +200,7 @@ class App():
 
             self.log_line = b''
 
+            # Flush on new line
+            config.output_file.flush()
+
 sys.exit(App().run())
