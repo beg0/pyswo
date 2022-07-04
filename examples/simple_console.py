@@ -39,10 +39,6 @@ PRINT_MATCH_PATTERN = "matched-pattern"
 PRINT_MATCH_GROUPS = "matched-groups"
 PRINT_MATCH_PATTERN_AND_GROUPS = "matched-pattern-groups"
 
-DEFAULT_OUTPUT_STREAM = sys.stdout
-if hasattr(DEFAULT_OUTPUT_STREAM, 'buffer'):
-    DEFAULT_OUTPUT_STREAM = DEFAULT_OUTPUT_STREAM.buffer
-
 def encoding(what):
     """ Check encoding is valid - argparse compatible """
     try:
@@ -73,6 +69,11 @@ class App():
     @staticmethod
     def build_argparse():
         """ Generate the Command Line argument parser using argparse """
+
+        default_output_stream = sys.stdout
+        if hasattr(default_output_stream, 'buffer'):
+            default_output_stream = default_output_stream.buffer
+
         cli_parser = argparse.ArgumentParser(description=__doc__)
         cli_parser.add_argument("-c", "--swo-channel",
                                 type=int,
@@ -81,7 +82,7 @@ class App():
                                 help="SWO channel to display")
         cli_parser.add_argument("-o", "--output-file",
                                 type=argparse.FileType('wb'),
-                                default=DEFAULT_OUTPUT_STREAM,
+                                default=default_output_stream,
                                 help="Save console to file")
 
         pattern_matching_group = cli_parser.add_argument_group("pattern matching")
