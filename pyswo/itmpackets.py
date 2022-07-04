@@ -82,7 +82,7 @@ class ItmDwtEventCounterPacket(ItmSourcePacket):   # pylint: disable=too-few-pub
     The DWT unit generates an Event counter packet when a counter value wraps round to zero, that
     is, when:
 
-        - a countup, or incrementing, counter overflows
+        - a count-up, or incrementing, counter overflows
         - a countdown, or decrementing, counter underflow.
 
     The packet has a single payload byte, containing a set of bits that show which counters have
