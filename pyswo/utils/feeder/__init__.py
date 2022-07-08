@@ -34,6 +34,10 @@ def _import_feeders():
 
     def looks_like_feeder(what):
         """ heuristic to tell if an object is a Feeder class """
+
+        # We want to check 'what' is exactly a class, thus the use of unidiomatic type()
+        # instead of isinstance()
+        # pylint: disable=unidiomatic-typecheck
         return type(what) == type and \
                callable(what) and \
                hasattr(what, 'add_to_argparser')
