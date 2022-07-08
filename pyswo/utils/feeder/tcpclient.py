@@ -39,9 +39,9 @@ def host_str_to_tuple(option_string):
 
     try:
         pair[1] = int(pair[1], 0)
-    except ValueError:
+    except ValueError as err:
         msg = _("Can't parse %r as a port in %s")
-        raise ArgumentTypeError(msg % (pair[1], option_string))
+        raise ArgumentTypeError(msg % (pair[1], option_string)) from err
     return tuple(pair)
 
 #pylint: disable=too-few-public-methods
