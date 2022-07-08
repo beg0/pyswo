@@ -26,6 +26,7 @@
 """ Reading ITM data from TCP connection"""
 
 import socket
+import time
 from argparse import ArgumentTypeError
 from pyswo.utils.gettext_wrapper import gettext as _
 from ._feeder_argparse import AbstractFeederGenerator, CreateFeederAction
@@ -58,23 +59,55 @@ class TcpClient:
     def __init__(self, host, reconnect=False, address_family=socket.AF_INET):
         self.host = host
         self.reconnect = reconnect
+        self.address_family = address_family
+        self.sock = None
 
+        self._connect_to_host(self.host, address_family=address_family)
+
+    def _connect_to_host(self, host, address_family=socket.AF_INET):
+        """ Create a TCP socket and start the connection to an host """
         sock = socket.socket(address_family, socket.SOCK_STREAM)
-        sock.connect(self.host)
+        sock.connect(host)
         self.sock = sock
+        return sock
 
     def __call__(self):
         """ Read ITM stream from TCP connection """
-        data = []
+        data = bytes()
+        sock = self.sock
         while not data:
-            data = self.sock.recv(1024)
+            try:
+                if sock:
+                    data = sock.recv(1024)
+                else:
+                    data = bytes()
+            except (ConnectionResetError, OSError):
+                # Silent connection errors
+                # If needed (e.g. self.reconnect is False), EOFError will be raise later
+                data = bytes()
 
             if not data:
-                self.sock.shutdown(socket.SHUT_RDWR)
+                # Try to shutdown connection in a clean way
+                # but ignore errors
+                if sock:
+                    try:
+                        sock.shutdown(socket.SHUT_RDWR)
+                    except OSError:
+                        pass
 
+                # Try to reconnect, but ignore connection error and retry later
                 if self.reconnect:
-                    print("reconnect")
-                    self.sock.connect(self.host)
+
+                    #if sock:
+                    #    print("reconnect")
+
+                    try:
+                        sock = self._connect_to_host(self.host, address_family=self.address_family)
+                    except ConnectionRefusedError:
+                        sock = None
+                        self.sock = None
+                        # Yield a bit if remote server is not ready to accept a new connection
+                        time.sleep(0.1)
                 else:
                     raise EOFError
 
