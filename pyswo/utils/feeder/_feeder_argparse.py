@@ -66,7 +66,7 @@ class CreateFeederAction(argparse.Action):
         self.feeder_generator = kwargs['feeder_generator']
         del kwargs['feeder_generator']
 
-        super(CreateFeederAction, self).__init__(option_strings, dest, **kwargs)
+        super().__init__(option_strings, dest, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         feeder_generator = getattr(namespace, 'feeder_generator', None)
