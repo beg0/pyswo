@@ -40,8 +40,8 @@ IRQ_COUNT = 128
 # Max number of exceptions that are not IRQ (e.g. internal to Cortex core)
 NVIC_USER_IRQ_OFFSET = 16
 
-# IRQ number that identify the 'thread mode'
-RESET_HANDLER_ID = 0
+# IRQ number that identify the 'thread mode', aka the main loop aka the reset handler
+THREAD_EXCEPTION_ID = 0
 
 DEFAULT_EXCEPTIONS_NAME = [
     "Reset_Handler",
@@ -198,7 +198,7 @@ class App():
         """ Application main loop """
 
         # The main program is treated as exception 0
-        reset_handler_tracker = self.exception_trackers[RESET_HANDLER_ID]
+        reset_handler_tracker = self.exception_trackers[THREAD_EXCEPTION_ID]
 
         timestamp = None
         try:
@@ -236,7 +236,7 @@ class App():
         """ Print summary of exceptions"""
 
         fired_irq = [ irq for irq in self.exception_trackers \
-            if irq.count > 0 and irq.exception_number != RESET_HANDLER_ID ]
+            if irq.count > 0 and irq.exception_number != THREAD_EXCEPTION_ID ]
 
         if fired_irq:
             print(" name             " +
