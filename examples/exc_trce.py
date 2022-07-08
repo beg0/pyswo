@@ -44,7 +44,7 @@ NVIC_USER_IRQ_OFFSET = 16
 THREAD_EXCEPTION_ID = 0
 
 DEFAULT_EXCEPTIONS_NAME = [
-    "Reset_Handler",
+    "Thread",
     "NMI",
     "HardFault",
     "MemManage",
@@ -54,8 +54,8 @@ DEFAULT_EXCEPTIONS_NAME = [
     "rsvd",
     "rsvd",
     "rsvd",
-    "SVC",
-    "DebugMon",
+    "SVCall",
+    "DebugMonitor",
     "rsvd",
     "PendSV",
     "SysTick",
@@ -183,7 +183,7 @@ class App():
         def get_irq_name(irq_num):
             if irq_num < len(DEFAULT_EXCEPTIONS_NAME):
                 return DEFAULT_EXCEPTIONS_NAME[irq_num]
-            return ""
+            return "IRQ(%u)" % (irq_num - NVIC_USER_IRQ_OFFSET)
 
         self.decoder = TimeTrackingItmDecoder(swo_feeder)
         self.last_irq_num = None
