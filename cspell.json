@@ -1,0 +1,18 @@
+{
+    "words": [
+        "pyswo",
+        "itmdecoder",
+        "itmpackets",
+        "PCRE",             // Perl Compatible Regular Expression
+        "CDDD",
+        "IGTS",             // ItmGtsType
+        "IDCW",             // ItmDwtCounterWrap
+        "IDEE",             // ItmDwtExceptionEvent
+        "RDWR",             // ReaD WRite
+        "rsvd",             // Reserved
+        "TSENA"             // Time Stamp ENAble
+    ],
+    "ignoreRegExpList": [
+        "0b[x01]+"
+    ]
+}
