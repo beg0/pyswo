@@ -131,7 +131,7 @@ class ItmDecoder():
                 pkt = ItmDwtPcPacket(
                     comp=comp,
                     program_counter=value)
-            if data_trace_pkt_id == 0x09:
+            elif data_trace_pkt_id == 0x09:
                 pkt = ItmDwtAddrOffsetPacket(
                     comp=comp,
                     address_offset=value)
