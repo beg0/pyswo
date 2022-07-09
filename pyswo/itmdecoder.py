@@ -339,7 +339,7 @@ class ItmDecoder():
         assert header & 0b00001000, "Not an extension packet"
 
         first_ext_bits = (header & 0x70) >> 4
-        source = bool(header & 0x04 >> 2)
+        source = bool((header & 0x04) >> 2)
         if not ItmDecoder.is_continuation_bit_set(header):
             extension_info = int(first_ext_bits)
             pkt = ItmExtensionPacket(source, extension_info)
