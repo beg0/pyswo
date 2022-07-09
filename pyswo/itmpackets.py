@@ -186,6 +186,8 @@ class ItmOverflowPacket(ItmProtocolPacket):  # pylint: disable=too-few-public-me
         - the DWT attempts to generate a Hardware source packet when the DWT output buffer is full
         - the Local timestamp counter overflows.
     """
+    def __repr__(self):
+        return "<ItmOverflowPacket>"
 
 class ItmLocalTsPacket(ItmProtocolPacket):  # pylint: disable=too-few-public-methods
     """ ITM Local Timestamp packet
