@@ -202,3 +202,58 @@ class tests_itmdecoder(unittest.TestCase):
             # Be sure only one packet is decoded
             with self.assertRaises(StopIteration):
                 next(iter_decoder)
+
+    def test_decoder_partial(self):
+        """ test decoding of partial ITM packets"""
+
+        decoder = ItmDecoder()
+
+        for pkt_desc in INPUT_PACKETS:
+
+            input_stream = pkt_desc[0]
+            expected_pkt = pkt_desc[1]
+
+            iter_decoder = iter(decoder)
+
+            for datum in input_stream[:-1]:
+                decoder.feed(bytes([datum]))
+
+                # Be sure we can't decode the packet until it is not fully sent
+                with self.assertRaises(StopIteration):
+                    next(iter_decoder)
+
+
+            # send the last byte
+            decoder.feed(bytes([input_stream[-1]]))
+
+            # be sure we decoded the packet
+            decoded_pkt = next(iter_decoder)
+
+            # Hack: use repr() to compare 2 packets...
+            #  this may not be very accurate
+            self.assertEqual(repr(decoded_pkt), repr(expected_pkt))
+
+
+    def test_decoder_several(self):
+        """ test decoding of several ITM packets in a row"""
+
+        decoder = ItmDecoder()
+
+        full_data = bytes()
+        all_expected_pkt = []
+
+        for pkt_desc in INPUT_PACKETS:
+            input_stream = pkt_desc[0]
+            expected_pkt = pkt_desc[1]
+
+            full_data += input_stream
+            all_expected_pkt.append(expected_pkt)
+
+        decoder.feed(full_data)
+
+        for decoded_pkt in decoder:
+            expected_pkt = all_expected_pkt.pop(0)
+            self.assertEqual(repr(decoded_pkt), repr(expected_pkt))
+
+        # Be sure we decoded every packets (e.g. list is empty)
+        self.assertFalse(all_expected_pkt)
