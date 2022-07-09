@@ -55,7 +55,7 @@ INPUT_PACKETS = [
     (b'\x57\xAA\xBB\xCC\xDD', ItmDwtPcPacket(comp=1, program_counter=0xdDCCBBAA)),
     (b'\x6F\xAB\xCD\xEF\x01', ItmDwtAddrOffsetPacket(comp=2, address_offset=0x01EFCDAB)),
     (b'\xA6\xAB\xCD', ItmDwtDataValuePacket(comp=2, value=0xCDAB, is_write=False, size=2)),
-    (b'\xAD\xAB\xCD', ItmDwtDataValuePacket(comp=2, value=0xAB, is_write=True,  size=1)),
+    (b'\xAD\xAB', ItmDwtDataValuePacket(comp=2, value=0xAB, is_write=True,  size=1)),
 ]
 
 class FeederClassFromString():
