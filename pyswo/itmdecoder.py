@@ -25,7 +25,7 @@
 """ Decode ITM binary stream send over SWO """
 from __future__ import print_function
 
-from pyswo.itmpackets import (
+from .itmpackets import (
     ItmSwPacket,
     ItmOverflowPacket,
     ItmLocalTsPacket,
