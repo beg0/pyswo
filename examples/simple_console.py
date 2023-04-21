@@ -24,6 +24,7 @@
 # SOFTWARE.
 #
 """ Simple SWO log trace viewer """
+import os
 import sys
 import argparse
 import re
@@ -195,7 +196,7 @@ class App():
                         lambda pos_txt1, pos_txt2: cmp_range(pos_txt1[0], pos_txt2[0])))
 
                     flat_captured_txt = [pos_txt[1] for pos_txt in flat_groups]
-                    output_str = config.match_group_separator.join(flat_captured_txt) + '\n'
+                    output_str = config.match_group_separator.join(flat_captured_txt) + os.linesep
                     config.output_file.write(output_str.encode(config.encoding))
 
             self.log_line = b''
